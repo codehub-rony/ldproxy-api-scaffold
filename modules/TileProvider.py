@@ -1,22 +1,21 @@
 import time
 from yamlmaker import generate
-from sqlalchemy import VARCHAR, Text, String, TIMESTAMP, text, Integer, BIGINT
 import os
 
 class TileProvider:
 
     def __init__(self, service_id:str, table_config:dict):
         """
-        Initializes a Provider instance.
+        A class for generating a tile provider configuration in YAML format.
 
-        Args:
-            service_id (str): The identifier for the service.
-            force_axis_order (str): Swap lat and lon coordinates in geometry field.
-            table_config (dict): The configuration of tables, including column names, column datatypes, and schema.
-            engine: The SQLAlchemy engine for database connections.
-            db_config (dict): The configuration dictionary with database connection details.
-            docker (bool, optional): Indicates if ldproxy is running in Docker. Defaults to False.
+        This class creates a tile provider configuration based on table settings and exports it as a YAML file.
+
+        Attributes:
+        id (str): The identifier for the service.
+        table_config (dict): The configuration of tables, including table names and settings.
+        config (dict): The complete configuration for the tile provider.
         """
+
         self.id = service_id
         self.table_config = table_config
         self.config = {
