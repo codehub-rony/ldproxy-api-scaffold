@@ -45,7 +45,6 @@ class TileProvider:
 
 
     def create_tilesets(self):
-        print(self.table_config)
 
         for table in self.table_config['tables']:
             self.config["tilesets"][table['tablename']] = {"id": table['tablename']}

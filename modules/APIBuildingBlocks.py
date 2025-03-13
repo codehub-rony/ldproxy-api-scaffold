@@ -2,7 +2,8 @@ class Queryables():
     def __init__(self):
         self.config = {
             "buildingBlock": "QUERYABLES",
-            "enabled": True
+            "enabled": True,
+            "included": ['*']
         }
 
     def export_as_dict(self):
