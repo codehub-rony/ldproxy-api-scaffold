@@ -1,6 +1,6 @@
 # ldproxy config generator
 
-A simple python script for generating API configuration files for [ldproxy](https://github.com/interactive-instruments/ldproxy). The generated config files will be saved in a `export` folder. The folder structure inside the `export` folder can be copied to ldproxy data folder under `store/entities/`
+A simple python script for generating basic API configuration files for [ldproxy](https://github.com/interactive-instruments/ldproxy) based on a database connection. The generated config files will be saved in a `export` folder. The folder structure inside the `export` folder can be copied to ldproxy data folder under `store/entities/`
 
 Currently the following API building blocks are supported
 
