@@ -1,6 +1,6 @@
 import time
 from yamlmaker import generate
-from modules.APIBuildingBlocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE
+from modules.APIBuildingBlocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections
 from sqlalchemy.engine import Engine
 import os
 
@@ -66,6 +66,9 @@ class Service:
 
             if (api == 'QUERYABLES'):
                 self.config["api"].append(Queryables().export_as_dict())
+
+            if (api == 'PROJECTIONS'):
+                self.config['api'].append(Projections().export_as_dict())
 
             if (api == 'TILES'):
                 self.config["api"].append(TileMatrixSet().export_as_dict())
