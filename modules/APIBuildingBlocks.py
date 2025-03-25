@@ -19,13 +19,12 @@ class TileMatrixSet:
         return self.config
 
 class Tiles:
-    def __init__(self, service_id, tablename):
-
+    def __init__(self, service_id):
         self.config = {
             "buildingBlock": "TILES",
             "enabled": True,
             "TileProvider": f"{service_id}-tiles",
-            "tileProviderTileset": tablename
+            "tileProviderTileset": "__all__"
         }
     def export_as_dict(self):
         return self.config

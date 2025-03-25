@@ -69,9 +69,7 @@ class Service:
 
             if (api == 'TILES'):
                 self.config["api"].append(TileMatrixSet().export_as_dict())
-
-                for table in self.table_config['tables']:
-                     self.config["api"].append(Tiles(self.service_id, table['tablename']).export_as_dict())
+                self.config["api"].append(Tiles(self.service_id).export_as_dict())
 
             if (api == 'CRS'):
                 self.config["api"].append(CRS().export_as_dict())

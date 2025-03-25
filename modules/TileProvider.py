@@ -1,4 +1,4 @@
-import time
+
 from yamlmaker import generate
 import os
 
@@ -45,6 +45,7 @@ class TileProvider:
 
 
     def create_tilesets(self):
+        self.config["tilesets"]["__all__"] = {"id": "__all__", "combine": ["*"]}
 
         for table in self.table_config['tables']:
             self.config["tilesets"][table['tablename']] = {"id": table['tablename']}
@@ -63,6 +64,13 @@ class TileProvider:
           os.makedirs(current_folder_path)
 
         generate(self.config, f"export/providers/{self.id}-tiles")
+
+        with open(f"export/providers/{self.id}-tiles.yml", "r+") as file:
+            yaml_content = file.read()
+            yaml_content = yaml_content.replace("combine:\n    - '*'", 'combine: ["*"]')
+            file.seek(0)
+            file.write(yaml_content)
+            file.truncate()
 
 
 
