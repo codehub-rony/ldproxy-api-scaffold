@@ -1,83 +1,76 @@
-class Queryables():
-    def __init__(self):
+class BaseBuildingBlock():
+    def __init__(self, building_block_name):
         self.config = {
-            "buildingBlock": "QUERYABLES",
-            "enabled": True,
-            "included": ['*']
-        }
-
-    def export_as_dict(self):
-        return self.config
-class TileMatrixSet:
-    def __init__(self):
-        self.config = {
-            "buildingBlock": "TILE_MATRIX_SETS",
+            "buildingBlock": building_block_name,
             "enabled": True
         }
 
     def export_as_dict(self):
         return self.config
 
-class Tiles:
-    def __init__(self, service_id, tablename):
+class Queryables(BaseBuildingBlock):
+    def __init__(self):
+        super().__init__("QUERYABLES")
+        self.config["included"] = ['*']
 
-        self.config = {
-            "buildingBlock": "TILES",
-            "enabled": True,
+    def export_as_dict(self):
+        return self.config
+
+class TileMatrixSet(BaseBuildingBlock):
+    def __init__(self):
+        super().__init__("TILE_MATRIX_SETS")
+
+    def export_as_dict(self):
+        return self.config
+
+class Tiles(BaseBuildingBlock):
+    def __init__(self, service_id):
+        super().__init__("TILES")
+        self.config.update({
             "TileProvider": f"{service_id}-tiles",
-            "tileProviderTileset": tablename
-        }
-    def export_as_dict(self):
-        return self.config
+            "tileProviderTileset": "__all__"
+        })
 
-class CRS:
+class CRS(BaseBuildingBlock):
     def __init__(self):
-        self.config = {
-            "buildingBlock": "CRS",
-            "enabled": True,
-            "additionalCrs": [{"code": 4258, "forceAxisOrder": "NONE"},
-                              {"code": 3857, "forceAxisOrder": "NONE"}]
-        }
+        super().__init__("CRS")
+        self.config.update({
+            "additionalCrs": [
+                {"code": 4258, "forceAxisOrder": "NONE"},
+                {"code": 3857, "forceAxisOrder": "NONE"}
+            ]
+        })
 
-    def export_as_dict(self):
-        return self.config
-
-class Styles:
+class Projections(BaseBuildingBlock):
     def __init__(self):
-        self.config = {
-            "buildingBlock": "STYLES",
-            "enabled": True,
-            "deriveCollectionStyles": True
-        }
-    def export_as_dict(self):
-        return self.config
+        super().__init__("PROJECTIONS")
 
-class Filter:
+
+class Styles(BaseBuildingBlock):
     def __init__(self):
-        self.config = {
-            "buildingBlock": "FILTER",
-            "enabled": True,
-        }
-    def export_as_dict(self):
-        return self.config
+        super().__init__("STYLES")
+        self.config.update({
+             "deriveCollectionStyles": True
+        })
 
+class Filter(BaseBuildingBlock):
+    def __init__(self):
+        super().__init__("FILTER")
 
 # Collections API's
-class FEATURES_CORE:
+class FEATURES_CORE(BaseBuildingBlock):
     def __init__(self, columns):
+        super().__init__("FEATURES_CORE")
         self.columns = columns
-        self.config = {
+        self.config.update({
             "buildingBlock": "FEATURES_CORE",
             "enabled": True,
             "itemType": "feature",
             "queryables": {"spatial": ['geometry'],
                            "q": self.list_column_names()}
-        }
-        self.list_column_names()
+        })
 
     def list_column_names(self):
         return [column['name'] for column in self.columns if column['name'] not in ['geom', 'id', 'created_by'] ]
 
-    def export_as_dict(self):
-        return self.config
 

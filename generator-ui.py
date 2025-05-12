@@ -92,7 +92,7 @@ def main():
     if 'all' in target_tables:
         target_tables = schema_table_choices
 
-    building_block_choices = ["QUERYABLES","CRS", "FILTER","TILES", "STYLES"]
+    building_block_choices = ["QUERYABLES","CRS", "FILTER","TILES", "STYLES", "PROJECTIONS"]
 
     api_buildingblocks = inquirer.checkbox(
         message="Select the API blocks (use arrows and space to select multiple)",

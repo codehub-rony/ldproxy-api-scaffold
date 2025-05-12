@@ -1,7 +1,8 @@
 import time
-from yamlmaker import generate
 from sqlalchemy import VARCHAR, Text, String, TIMESTAMP, text, Integer, BIGINT
 import os
+import base64
+import yaml
 
 class SQLProvider:
     """
@@ -189,27 +190,25 @@ class SQLProvider:
 
     def create_connection_info_dict(self):
         """
-        Constructs a dictionary with the database connection information.
+        Generates a dictionary containing database connection details.
 
         Returns:
-            dict: The connection information for the database, including database, host, user, password,
-                  schemas, and pool settings.
+            dict: A dictionary with the following keys:
+                - dialect (str): The database dialect (set to 'PGIS').
+                - database (str): The database name.
+                - host (str): The database host, using 'host.docker.internal' if running in Docker.
+                - user (str): The database username.
+                - password (str): The Base64-encoded database password.
+                - schemas (list): A list containing the database schema.
         """
-
         connection = {}
         connection['dialect'] = 'PGIS'
         connection['database'] = self.db_config['DATABASE']
         connection['host'] = 'host.docker.internal' if self.docker else self.db_config['DB_HOST']
         connection['user'] = self.db_config['DB_USER']
-        connection['password'] = self.db_config['DB_PASSWORD']
+        password = self.db_config['DB_PASSWORD']
+        connection['password'] = base64.b64encode(password.encode()).decode()
         connection['schemas'] = [self.db_config['DB_SCHEMA']]
-        connection['pool'] = {}
-        connection['pool']['maxConnections'] = -1
-        connection['pool']['minConnections'] = 1
-        connection['pool']['initFailFast'] = True
-        connection['pool']['initFailTimeout'] = 1
-        connection['pool']['idleTimeout'] = '10m'
-        connection['pool']['shared'] = False
 
         return connection
 
@@ -220,12 +219,15 @@ class SQLProvider:
         This method creates the necessary directories if they don't exist and generates a YAML file
         based on the current configuration. The file is saved to the `export/providers` directory.
         """
-        current_folder_path = os.path.join(os.getcwd(), 'export/providers')
+        export_path = os.path.join(os.getcwd(), 'export/providers')
 
-        if not os.path.exists(current_folder_path):
-          os.makedirs(current_folder_path)
+        if not os.path.exists(export_path):
+          os.makedirs(export_path)
 
-        generate(self.config, f"export/providers/{self.service_id}")
+        yaml_file = os.path.join(export_path, f"{self.service_id}.yml")
+
+        with open(yaml_file, 'w') as f:
+            yaml.dump(self.config, f, sort_keys=False)
 
 
 

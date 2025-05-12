@@ -1,8 +1,8 @@
 import time
-from yamlmaker import generate
-from modules.APIBuildingBlocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE
+from modules.APIBuildingBlocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections
 from sqlalchemy.engine import Engine
 import os
+import yaml
 
 class Service:
     """
@@ -67,11 +67,12 @@ class Service:
             if (api == 'QUERYABLES'):
                 self.config["api"].append(Queryables().export_as_dict())
 
+            if (api == 'PROJECTIONS'):
+                self.config['api'].append(Projections().export_as_dict())
+
             if (api == 'TILES'):
                 self.config["api"].append(TileMatrixSet().export_as_dict())
-
-                for table in self.table_config['tables']:
-                     self.config["api"].append(Tiles(self.service_id, table['tablename']).export_as_dict())
+                self.config["api"].append(Tiles(self.service_id).export_as_dict())
 
             if (api == 'CRS'):
                 self.config["api"].append(CRS().export_as_dict())
@@ -104,11 +105,13 @@ class Service:
         Generates a YAML file from the current configuration and exports it to the 'export/services' directory.
         The file is named based on the service ID.
         """
-        current_folder_path = os.path.join(os.getcwd(), 'export/services')
+        export_path = os.path.join(os.getcwd(), 'export/services')
 
-        if not os.path.exists(current_folder_path):
-          os.makedirs(current_folder_path)
+        if not os.path.exists(export_path):
+          os.makedirs(export_path)
 
-        generate(self.config, f"export/services/{self.service_id}")
+        yaml_file = os.path.join(export_path, f"{self.service_id}.yml")
+        with open(yaml_file, 'w') as f:
+            yaml.dump(self.config, f, sort_keys=False)
 
 
