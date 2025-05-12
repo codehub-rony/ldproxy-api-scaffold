@@ -8,7 +8,6 @@ class BaseBuildingBlock():
     def export_as_dict(self):
         return self.config
 
-
 class Queryables(BaseBuildingBlock):
     def __init__(self):
         super().__init__("QUERYABLES")

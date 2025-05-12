@@ -1,19 +1,17 @@
 
-from yamlmaker import generate
 import os
+from typing import Dict, List
+import yaml
 
 class TileProvider:
 
-    def __init__(self, service_id:str, table_config:dict):
+    def __init__(self, service_id:str, table_config: Dict):
         """
-        A class for generating a tile provider configuration in YAML format.
+        Initialize a TileProvider instance.
 
-        This class creates a tile provider configuration based on table settings and exports it as a YAML file.
-
-        Attributes:
-        id (str): The identifier for the service.
-        table_config (dict): The configuration of tables, including table names and settings.
-        config (dict): The complete configuration for the tile provider.
+        Args:
+            service_id: The identifier for the service
+            table_config: Configuration dictionary for tables
         """
 
         self.id = service_id
@@ -58,12 +56,14 @@ class TileProvider:
         This method creates the necessary directories if they don't exist and generates a YAML file
         based on the current configuration. The file is saved to the `export/providers` directory.
         """
-        current_folder_path = os.path.join(os.getcwd(), 'export/providers')
+        export_path = os.path.join(os.getcwd(), 'export/providers')
 
-        if not os.path.exists(current_folder_path):
-          os.makedirs(current_folder_path)
+        if not os.path.exists(export_path):
+          os.makedirs(export_path)
 
-        generate(self.config, f"export/providers/{self.id}-tiles")
+        yaml_file = os.path.join(export_path, f"{self.id}-tiles.yml")
+        with open(yaml_file, 'w') as f:
+            yaml.dump(self.config, f, sort_keys=False)
 
         with open(f"export/providers/{self.id}-tiles.yml", "r+") as file:
             yaml_content = file.read()

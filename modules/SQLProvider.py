@@ -1,8 +1,8 @@
 import time
-from yamlmaker import generate
 from sqlalchemy import VARCHAR, Text, String, TIMESTAMP, text, Integer, BIGINT
 import os
 import base64
+import yaml
 
 class SQLProvider:
     """
@@ -219,12 +219,15 @@ class SQLProvider:
         This method creates the necessary directories if they don't exist and generates a YAML file
         based on the current configuration. The file is saved to the `export/providers` directory.
         """
-        current_folder_path = os.path.join(os.getcwd(), 'export/providers')
+        export_path = os.path.join(os.getcwd(), 'export/providers')
 
-        if not os.path.exists(current_folder_path):
-          os.makedirs(current_folder_path)
+        if not os.path.exists(export_path):
+          os.makedirs(export_path)
 
-        generate(self.config, f"export/providers/{self.service_id}")
+        yaml_file = os.path.join(export_path, f"{self.service_id}.yml")
+
+        with open(yaml_file, 'w') as f:
+            yaml.dump(self.config, f, sort_keys=False)
 
 
 
