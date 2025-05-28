@@ -4,7 +4,7 @@ from sqlalchemy.engine import Engine
 import os
 import yaml
 
-class Service:
+class ApiService:
     """
     A class to represent a service that generates configuration files for ldproxy, including API building blocks
     and collections based on provided table configuration.
