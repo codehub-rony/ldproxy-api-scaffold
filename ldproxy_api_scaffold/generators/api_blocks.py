@@ -1,4 +1,10 @@
 class BaseBuildingBlock():
+    """
+    Base class for defining LDProxy building block configuration objects.
+
+    Attributes:
+        config (dict): Configuration dictionary representing the building block.
+    """
     def __init__(self, building_block_name):
         self.config = {
             "buildingBlock": building_block_name,

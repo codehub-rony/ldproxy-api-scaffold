@@ -5,33 +5,37 @@ import yaml
 
 class ApiService:
     """
-    A class to represent a service that generates configuration files for ldproxy, including API building blocks
-    and collections based on provided table configuration.
+    Represents an LDProxy service configuration generator.
+
+    This class constructs a full service configuration including general settings,
+    API building blocks, and dataset collections. The configuration can be exported
+    as a YAML file for use in LDProxy.
 
     Attributes:
-        service_id (str): The identifier for the service.
-        api_buildingblocks (list): A list of API building blocks to be included in the configuration.
-        table_config (dict): The configuration dictionary for tables, including columns names, column datatypes, and schema.
-        config (dict): The configuration dictionary for the service, including API buildinglbocks and collections.
+        service_id (str): Unique identifier for the service.
+        api_buildingsblocks (list): List of API building blocks to include (e.g., 'TILES', 'CRS').
+        table_config (dict): Dictionary containing table schema and column information.
+        config (dict): The full configuration dictionary that will be exported.
 
     Methods:
         create_api_buildingblocks():
-            Populates the API configuration with the specified API building blocks.
+            Appends the selected API building blocks to the service configuration.
 
         create_collections():
-            Populates the collections in the configuration based on the table configuration.
+            Adds collection configurations based on the provided table schema.
 
-        create_yaml():
-            Generates a YAML file from the current configuration and exports it.
+        create_yaml(export_dir: str):
+            Exports the final configuration as a YAML file to the given directory.
     """
+
     def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list):
         """
-        Initializes a Service instance.
+        Initializes the ApiService with basic settings and triggers configuration setup.
 
         Args:
-            service_id (str): The identifier for the service.
-            table_config (dict): The configuration of tables, including columns names, column datatypes, and schema.
-            api_buildingblocks (list): A list of API building blocks to be included in the service configuration.
+            service_id (str): Unique name/identifier for the LDProxy service.
+            table_config (dict): Dictionary containing table and column metadata.
+            api_buildingblocks (list): List of building blocks to include in the API configuration.
         """
         self.service_id = service_id
         self.api_buildingsblocks = api_buildingblocks
@@ -54,8 +58,10 @@ class ApiService:
 
     def create_api_buildingblocks(self):
         """
-        Populates the API configuration with the specified API building blocks (e.g., Queryables, Tiles, CRS, Styles, Filter).
-        Each building block is added to the 'api' list in the configuration.
+        Appends the configured API building blocks to the service.
+
+        Based on the input list `api_buildingblocks`, this method appends instances
+        of building blocks like Queryables, Tiles, CRS, etc., to the `config['api']` list.
         """
 
         for api in self.api_buildingsblocks:
@@ -82,9 +88,11 @@ class ApiService:
 
     def create_collections(self):
         """
-        Populates the collections in the configuration based on the table configuration.
-        Each table defined in the configuration is added as a collection, with the table name as the collection ID.
-        If the 'FILTER' API building block is included, the core filter configuration is added to each collection.
+        Populates the `collections` section of the configuration.
+
+        Each table in `table_config['tables']` becomes a collection. If 'FILTER' is enabled
+        in the building blocks, then a `FEATURES_CORE` block with queryable columns is added
+        to the collection definition.
         """
         for table in self.table_config['tables']:
             table_name = table['tablename']
@@ -96,8 +104,12 @@ class ApiService:
 
     def create_yaml(self, export_dir:str):
         """
-        Generates a YAML file from the current configuration and exports it to the 'export/services' directory.
-        The file is named based on the service ID.
+        Exports the current service configuration to a YAML file.
+
+        The file is saved in a subdirectory `services/` under the provided export directory.
+
+        Args:
+            export_dir (str): Relative or absolute path to the export directory.
         """
         export_path = os.path.join(os.getcwd(), export_dir, 'services')
 
