@@ -4,14 +4,32 @@ from typing import Dict, List
 import yaml
 
 class TileProvider:
+    """
+    A class to represent a tile provider configuration for ldproxy.
+
+    Attributes:
+        id (str): The identifier for the tile service.
+        table_config (dict): Configuration dictionary containing table definitions.
+        config (dict): The complete configuration dictionary for the tile provider.
+
+    Methods:
+        create_default_tileset_levels():
+            Sets default zoom level ranges for tile generation.
+
+        create_tilesets():
+            Creates individual tileset entries for each table and a combined '__all__' tileset.
+
+        create_yaml(export_dir):
+            Generates and exports the tile provider YAML file.
+    """
 
     def __init__(self, service_id:str, table_config: Dict):
         """
-        Initialize a TileProvider instance.
+        Initializes a TileProvider instance.
 
         Args:
-            service_id: The identifier for the service
-            table_config: Configuration dictionary for tables
+            service_id (str): The identifier for the service.
+            table_config (dict): A configuration dictionary for tables, including their names.
         """
 
         self.id = service_id
@@ -39,10 +57,22 @@ class TileProvider:
         self.create_default_tileset_levels()
         self.create_tilesets()
     def create_default_tileset_levels(self):
+        """
+        Sets default zoom level range for all tilesets.
+
+        Adds a 'levels' key to 'tilesetDefaults' in the configuration, which defines
+        the range of WebMercatorQuad zoom levels used by default.
+        """
         self.config["tilesetDefaults"]["levels"] =  {"WebMercatorQuad": {"min": 5, "max": 20}}
 
 
     def create_tilesets(self):
+        """
+        Creates tileset definitions for each table and a global '__all__' tileset.
+
+        Each tileset is identified by the table name. A special '__all__' tileset
+        is created to combine all individual tables into one tileset.
+        """
         self.config["tilesets"]["__all__"] = {"id": "__all__", "combine": ["*"]}
 
         for table in self.table_config['tables']:
@@ -53,8 +83,12 @@ class TileProvider:
         """
         Generates a YAML file from the current configuration and exports it.
 
-        This method creates the necessary directories if they don't exist and generates a YAML file
-        based on the current configuration. The file is saved to the `export/providers` directory.
+        This method creates the necessary directories if they don't exist, then
+        writes the current tile provider configuration to a YAML file. It also
+        post-processes the file to properly format the 'combine' field.
+
+        Args:
+            export_dir (str): The directory where the 'providers' folder will be created.
         """
         export_path = os.path.join(os.getcwd(), export_dir, 'providers')
 

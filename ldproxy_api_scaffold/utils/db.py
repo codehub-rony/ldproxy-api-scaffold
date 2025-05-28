@@ -3,7 +3,31 @@ from sqlalchemy.engine.url import make_url
 from typing import List
 
 class DatabaseClient:
+    """
+    Utility class for connecting to a PostgreSQL/PostGIS database and extracting
+    schema and table metadata for LDProxy configuration generation.
+
+    Attributes:
+        conn_str (str): Full SQLAlchemy database connection string.
+        schema (str): Target schema to operate on.
+        url (URL): Parsed connection URL.
+        user (str): Database username.
+        password (str): Database password.
+        host (str): Host of the database server.
+        port (int): Port number of the database server.
+        database (str): Name of the target database.
+        engine (Engine): SQLAlchemy engine object.
+        inspector (Inspector): SQLAlchemy inspector for database metadata access.
+    """
     def __init__(self, conn_str:str, schema:str):
+        """
+        Initializes the database client, parses connection string, and prepares
+        the SQLAlchemy engine and inspector.
+
+        Args:
+            conn_str (str): SQLAlchemy-compatible connection string.
+            schema (str): Name of the database schema to inspect.
+        """
         self.conn_str = conn_str
         self.url = make_url(conn_str)
         self.user = self.url.username
@@ -17,6 +41,15 @@ class DatabaseClient:
         self.inspector = inspect(self.engine)
 
     def create_table_config(self, tablenames:List[str]):
+        """
+        Builds a configuration dictionary for a list of tables in the schema.
+
+        Args:
+            tablenames (List[str]): List of table names to include in the config.
+
+        Returns:
+            dict: A dictionary with schema name and column details for each table.
+        """
         table_config = {"db_schema": self.schema, "tables": []}
 
         for tablename in tablenames:

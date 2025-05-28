@@ -6,46 +6,49 @@ import yaml
 
 class SQLProvider:
     """
-    A class to represent a provider for generating provider configuration file for ldproxy.
+    A class to generate ldproxy provider configuration for SQL-based feature services.
 
     Attributes:
-        service_id (str): The identifier for the API service.
-        docker (bool): A flag to indicate if ldproxy is running within a Docker environment and connecting to a database outside docker.
-        config (dict): The configuration dictionary for the provider.
+        service_id (str): Identifier of the ldproxy service.
+        docker (bool): True if ldproxy is running inside Docker and needs special hostname resolution.
+        engine: SQLAlchemy engine used to connect to the database.
+        db_config (dict): Dictionary with database connection information.
+        table_config (dict): Table and column configuration for the provider.
+        config (dict): Internal configuration object representing the provider YAML structure.
 
     Methods:
         map_datatype(data_type):
-            Maps a database column datatype to a string representation for configuration.
+            Converts SQLAlchemy data types to ldproxy-compatible type strings.
 
         map_geom_type(geom_type):
-            Maps a geometry type to a standardized string representation.
+            Maps raw geometry types to ldproxy-compatible strings.
 
         create_types():
-            Populates the configuration with type definitions based on table configurations.
+            Populates the configuration with type definitions for each table.
 
         get_geometry_type(tablename):
-            Retrieves and maps the geometry type for a table from the database schema.
+            Retrieves and maps the geometry type of a table from the PostGIS metadata.
 
         create_table_properties(columns, tablename):
-            Creates properties for a table based on its columns.
+            Creates a dictionary of ldproxy property definitions for table columns.
 
         create_connection_info_dict():
-            Constructs the database connection information dictionary.
+            Constructs the dictionary with database connection info.
 
-        create_yaml():
-            Generates a YAML file from the current configuration and exports it.
+        create_yaml(export_dir):
+            Exports the full configuration as a YAML file.
     """
     def __init__(self, service_id:str, force_axis_order:str, table_config:dict, engine, db_config:dict, docker=False):
         """
-        Initializes a Provider instance.
+        Initializes a new SQLProvider instance.
 
         Args:
-            service_id (str): The identifier for the service.
-            force_axis_order (str): Swap lat and lon coordinates in geometry field.
-            table_config (dict): The configuration of tables, including column names, column datatypes, and schema.
-            engine: The SQLAlchemy engine for database connections.
-            db_config (dict): The configuration dictionary with database connection details.
-            docker (bool, optional): Indicates if ldproxy is running in Docker. Defaults to False.
+            service_id (str): Unique identifier for the ldproxy service.
+            force_axis_order (str): Axis order for CRS (e.g., 'true' to enforce lat/lon order).
+            table_config (dict): Configuration with schema, tables, and column metadata.
+            engine: SQLAlchemy engine for connecting to the database.
+            db_config (dict): Dictionary with database access details.
+            docker (bool): True if ldproxy runs in Docker and accesses a database outside the container.
         """
         self.service_id = service_id
         self.engine = engine
@@ -81,13 +84,13 @@ class SQLProvider:
 
     def map_datatype(self, data_type):
         """
-        Maps a database column datatype to a specific string representation for configuration.
+        Maps SQLAlchemy column types to ldproxy-compatible type strings.
 
         Args:
-            data_type: The SQLAlchemy datatype object.
+            data_type: A SQLAlchemy type object.
 
         Returns:
-            str: The mapped string representation of the datatype.
+            str: A string representing the mapped type for ldproxy ('STRING', 'INTEGER', etc.).
         """
         if isinstance(data_type, (VARCHAR, Text, String)):
             return 'STRING'
@@ -101,13 +104,13 @@ class SQLProvider:
 
     def map_geom_type(self, geom_type):
         """
-        Maps a geometry type to a standardized string representation.
+        Converts raw geometry type names to ldproxy-compatible geometry types.
 
         Args:
-            geom_type (str): The raw geometry type as a string.
+            geom_type (str): Geometry type as stored in `geometry_columns` (e.g., 'MULTILINESTRING').
 
         Returns:
-            str: The standardized geometry type string.
+            str: ldproxy-compatible geometry type string.
         """
 
         if geom_type == "MULTILINESTRING":
@@ -123,11 +126,10 @@ class SQLProvider:
 
     def create_types(self):
         """
-        Populates the configuration with type definitions for each table in the configuration.
+        Builds the 'types' section of the provider configuration.
 
-        This method iterates over each table in the provided table configuration and creates
-        properties for the columns of the table. The resulting type definitions are added to
-        the provider's configuration.
+        This includes reading all defined tables and their columns and setting
+        up ldproxy-compatible property definitions for each.
         """
         for tablename in self.table_config['tables']:
             properties = self.create_table_properties(tablename['columns'], tablename['tablename'])
@@ -135,13 +137,13 @@ class SQLProvider:
 
     def get_geometry_type(self, tablename:str):
         """
-        Retrieves and maps the geometry type for a specific table from the database schema.
+        Queries the PostGIS metadata to retrieve the geometry type of a table.
 
         Args:
-            tablename (str): The name of the table.
+            tablename (str): Name of the table for which to retrieve geometry type.
 
         Returns:
-            str: The geometry type as a string.
+            str: Mapped geometry type string or "ANY" if not found.
         """
         geometry_type = "ANY"
 
@@ -157,14 +159,14 @@ class SQLProvider:
 
     def create_table_properties(self, columns:list, tablename:str):
         """
-        Creates a dictionary of table properties based on its columns and configurations.
+        Creates a dictionary of property definitions for ldproxy.
 
         Args:
-            columns (list): A list of column definitions including name and type.
-            tablename (str): The name of the table.
+            columns (list): List of dicts, each with a 'name' and 'type' for a column.
+            tablename (str): Name of the table to which the columns belong.
 
         Returns:
-            dict: A dictionary mapping column names to their configuration properties.
+            dict: Mapping of column names to property definitions for ldproxy.
         """
         properties = {}
         has_datetime_role = False
@@ -191,16 +193,10 @@ class SQLProvider:
 
     def create_connection_info_dict(self):
         """
-        Generates a dictionary containing database connection details.
+        Builds the database connection info dictionary for ldproxy.
 
         Returns:
-            dict: A dictionary with the following keys:
-                - dialect (str): The database dialect (set to 'PGIS').
-                - database (str): The database name.
-                - host (str): The database host, using 'host.docker.internal' if running in Docker.
-                - user (str): The database username.
-                - password (str): The Base64-encoded database password.
-                - schemas (list): A list containing the database schema.
+            dict: Connection settings including dialect, credentials, host, and schema.
         """
         connection = {}
         connection['dialect'] = 'PGIS'
@@ -214,10 +210,10 @@ class SQLProvider:
 
     def create_yaml(self, export_dir:str):
         """
-        Generates a YAML file from the current configuration and exports it.
+        Writes the provider configuration as a YAML file to the specified directory.
 
-        This method creates the necessary directories if they don't exist and generates a YAML file
-        based on the current configuration. The file is saved to the `export/providers` directory.
+        Args:
+            export_dir (str): Base directory where the 'providers' folder and YAML will be saved.
         """
         export_path = os.path.join(os.getcwd(), export_dir, 'providers')
 
