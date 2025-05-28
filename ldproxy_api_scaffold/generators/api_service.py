@@ -1,6 +1,5 @@
 import time
-from modules.APIBuildingBlocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections
-from sqlalchemy.engine import Engine
+from ldproxy_api_scaffold.generators.api_blocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections
 import os
 import yaml
 
@@ -12,7 +11,6 @@ class ApiService:
     Attributes:
         service_id (str): The identifier for the service.
         api_buildingblocks (list): A list of API building blocks to be included in the configuration.
-        engine (Engine): The SQLAlchemy engine for database connections.
         table_config (dict): The configuration dictionary for tables, including columns names, column datatypes, and schema.
         config (dict): The configuration dictionary for the service, including API buildinglbocks and collections.
 
@@ -26,7 +24,7 @@ class ApiService:
         create_yaml():
             Generates a YAML file from the current configuration and exports it.
     """
-    def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list, engine:Engine):
+    def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list):
         """
         Initializes a Service instance.
 
@@ -34,11 +32,9 @@ class ApiService:
             service_id (str): The identifier for the service.
             table_config (dict): The configuration of tables, including columns names, column datatypes, and schema.
             api_buildingblocks (list): A list of API building blocks to be included in the service configuration.
-            engine (Engine): The SQLAlchemy engine for database connections.
         """
         self.service_id = service_id
         self.api_buildingsblocks = api_buildingblocks
-        self.engine = engine
         self.table_config = table_config
         self.config = {
             "id": service_id,
@@ -98,14 +94,12 @@ class ApiService:
                 self.config["collections"][table_name]['api'] = [FEATURES_CORE(table['columns']).export_as_dict()]
 
 
-
-
-    def create_yaml(self):
+    def create_yaml(self, export_dir:str):
         """
         Generates a YAML file from the current configuration and exports it to the 'export/services' directory.
         The file is named based on the service ID.
         """
-        export_path = os.path.join(os.getcwd(), 'export/services')
+        export_path = os.path.join(os.getcwd(), export_dir, 'services')
 
         if not os.path.exists(export_path):
           os.makedirs(export_path)

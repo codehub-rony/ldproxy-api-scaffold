@@ -49,6 +49,7 @@ class SQLProvider:
         """
         self.service_id = service_id
         self.engine = engine
+        self.url = self.engine.url
         self.docker = docker
         self.db_config = db_config
         self.table_config = table_config
@@ -146,7 +147,7 @@ class SQLProvider:
 
         with self.engine.connect() as connection:
             query = text("SELECT type FROM geometry_columns WHERE f_table_name = :table_name AND f_table_schema = :schema_name")
-            result = connection.execute(query, {"table_name": tablename, "schema_name": self.db_config['DB_SCHEMA']})
+            result = connection.execute(query, {"table_name": tablename, "schema_name": self.table_config['db_schema']})
             geom_type = result.fetchone()
 
             if geom_type and geom_type[0] != 'GEOMETRY':
@@ -203,23 +204,22 @@ class SQLProvider:
         """
         connection = {}
         connection['dialect'] = 'PGIS'
-        connection['database'] = self.db_config['DATABASE']
-        connection['host'] = 'host.docker.internal' if self.docker else self.db_config['DB_HOST']
-        connection['user'] = self.db_config['DB_USER']
-        password = self.db_config['DB_PASSWORD']
-        connection['password'] = base64.b64encode(password.encode()).decode()
-        connection['schemas'] = [self.db_config['DB_SCHEMA']]
+        connection['database'] = self.url.database
+        connection['host'] = 'host.docker.internal' if self.docker else self.url.host
+        connection['user'] = self.url.username
+        connection['password'] = base64.b64encode(self.url.password.encode()).decode()
+        connection['schemas'] = self.table_config['db_schema']
 
         return connection
 
-    def create_yaml(self):
+    def create_yaml(self, export_dir:str):
         """
         Generates a YAML file from the current configuration and exports it.
 
         This method creates the necessary directories if they don't exist and generates a YAML file
         based on the current configuration. The file is saved to the `export/providers` directory.
         """
-        export_path = os.path.join(os.getcwd(), 'export/providers')
+        export_path = os.path.join(os.getcwd(), export_dir, 'providers')
 
         if not os.path.exists(export_path):
           os.makedirs(export_path)
