@@ -49,14 +49,14 @@ class TileProvider:
             self.config["tilesets"][table['tablename']] = {"id": table['tablename']}
 
 
-    def create_yaml(self):
+    def create_yaml(self, export_dir:str):
         """
         Generates a YAML file from the current configuration and exports it.
 
         This method creates the necessary directories if they don't exist and generates a YAML file
         based on the current configuration. The file is saved to the `export/providers` directory.
         """
-        export_path = os.path.join(os.getcwd(), 'export/providers')
+        export_path = os.path.join(os.getcwd(), export_dir, 'providers')
 
         if not os.path.exists(export_path):
           os.makedirs(export_path)
@@ -65,7 +65,7 @@ class TileProvider:
         with open(yaml_file, 'w') as f:
             yaml.dump(self.config, f, sort_keys=False)
 
-        with open(f"export/providers/{self.id}-tiles.yml", "r+") as file:
+        with open(yaml_file, "r+") as file:
             yaml_content = file.read()
             yaml_content = yaml_content.replace("combine:\n    - '*'", 'combine: ["*"]')
             file.seek(0)
