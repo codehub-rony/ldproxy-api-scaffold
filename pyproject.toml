@@ -1,0 +1,28 @@
+[project]
+name = "ldproxy_api_scaffold"
+version = "0.1.0"
+description = "Tool to generate basic API YAML config files for ldproxy"
+authors = [
+  { name="Rony Nedkov", email="you@example.com" }
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+  "pyyaml>=6.0",
+  "SQLAlchemy>=2.0.39",
+  "psycopg2-binary>=2.9"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "flake8",
+]
+
+[project.scripts]
+ldproxy-scaffold = "ldproxy_api_scaffold.scaffold:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

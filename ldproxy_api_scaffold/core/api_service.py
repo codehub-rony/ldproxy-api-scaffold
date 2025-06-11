@@ -1,5 +1,5 @@
 import time
-from ldproxy_api_scaffold.generators.api_blocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections
+from .api_blocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections
 import os
 import yaml
 

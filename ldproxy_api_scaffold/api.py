@@ -1,10 +1,9 @@
 import yaml
 import os
 from typing import List, Optional
-from sqlalchemy import create_engine, inspect
-from ldproxy_api_scaffold.generators.api_service import ApiService
-from ldproxy_api_scaffold.generators.sql_provider import SQLProvider
-from ldproxy_api_scaffold.generators.tile_provider import TileProvider
+from ldproxy_api_scaffold.core.api_service import ApiService
+from ldproxy_api_scaffold.core.sql_provider import SQLProvider
+from ldproxy_api_scaffold.core.tile_provider import TileProvider
 from ldproxy_api_scaffold.utils.db import DatabaseClient
 
 class LDProxyConfigGenerator():
