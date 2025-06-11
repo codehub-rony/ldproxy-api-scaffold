@@ -3,6 +3,7 @@ from sqlalchemy import VARCHAR, Text, String, TIMESTAMP, text, Integer, BIGINT
 import os
 import base64
 import yaml
+from typing import Optional
 
 class SQLProvider:
     """
@@ -38,10 +39,9 @@ class SQLProvider:
         create_yaml(export_dir):
             Exports the full configuration as a YAML file.
     """
-    def __init__(self, service_id:str, force_axis_order:str, table_config:dict, engine, db_config:dict, docker=False):
+    def __init__(self, service_id:str, table_config:dict, engine, db_conn_str, force_axis_order:Optional[bool]=True, run_in_docker:Optional[bool]=False):
         """
         Initializes a new SQLProvider instance.
-
         Args:
             service_id (str): Unique identifier for the ldproxy service.
             force_axis_order (str): Axis order for CRS (e.g., 'true' to enforce lat/lon order).
@@ -52,10 +52,17 @@ class SQLProvider:
         """
         self.service_id = service_id
         self.engine = engine
-        self.url = self.engine.url
-        self.docker = docker
-        self.db_config = db_config
+        self.db_conn_str = db_conn_str
+        self.db_config = None
         self.table_config = table_config
+
+        native_crs = {
+           "code": 4326,
+        }
+
+        if force_axis_order:
+            native_crs["forceAxisOrder"] = "LON_LAT"
+
         self.config = {
             "id": service_id,
             "entityStorageVersion": 2,
@@ -63,12 +70,9 @@ class SQLProvider:
             "lastModified": round(time.time()),
             "providerType": "FEATURE",
             "providerSubType": "SQL",
-            "nativeCrs": {
-                "code": 4326,
-                "forceAxisOrder": force_axis_order
-            },
+            "nativeCrs": native_crs,
             "typeValidation": "NONE",
-            "connectionInfo": self.create_connection_info_dict(),
+            "connectionInfo": self.create_connection_info_dict(run_in_docker),
             "sourcePathDefaults": {
                 "primaryKey": "id",
                 "sortKey": "id"
@@ -79,6 +83,8 @@ class SQLProvider:
             },
             "types": {}
         }
+
+
 
         self.create_types()
 
@@ -191,7 +197,7 @@ class SQLProvider:
 
         return properties
 
-    def create_connection_info_dict(self):
+    def create_connection_info_dict(self, run_in_docker):
         """
         Builds the database connection info dictionary for ldproxy.
 
@@ -200,10 +206,10 @@ class SQLProvider:
         """
         connection = {}
         connection['dialect'] = 'PGIS'
-        connection['database'] = self.url.database
-        connection['host'] = 'host.docker.internal' if self.docker else self.url.host
-        connection['user'] = self.url.username
-        connection['password'] = base64.b64encode(self.url.password.encode()).decode()
+        connection['database'] = self.engine.url.database
+        connection['host'] = 'host.docker.internal' if run_in_docker else self.db_conn_str
+        connection['user'] = self.engine.url.username
+        connection['password'] = base64.b64encode(self.engine.url.password.encode()).decode()
         connection['schemas'] = self.table_config['db_schema']
 
         return connection
@@ -221,6 +227,7 @@ class SQLProvider:
           os.makedirs(export_path)
 
         yaml_file = os.path.join(export_path, f"{self.service_id}.yml")
+        print('file locaiton', yaml_file)
 
         with open(yaml_file, 'w') as f:
             yaml.dump(self.config, f, sort_keys=False)
