@@ -9,10 +9,14 @@ class SQLProvider:
     """
     A class to generate ldproxy provider configuration for SQL-based feature services.
 
+    This class handles the creation of provider configurations for SQL databases,
+    particularly focusing on PostGIS-enabled databases. It manages type mappings,
+    geometry handling, and database connection settings.
+
     Attributes:
         service_id (str): Identifier of the ldproxy service.
-        docker (bool): True if ldproxy is running inside Docker and needs special hostname resolution.
         engine: SQLAlchemy engine used to connect to the database.
+        db_conn_str (str): Database connection string.
         db_config (dict): Dictionary with database connection information.
         table_config (dict): Table and column configuration for the provider.
         config (dict): Internal configuration object representing the provider YAML structure.
@@ -41,14 +45,17 @@ class SQLProvider:
     """
     def __init__(self, service_id:str, table_config:dict, engine, db_conn_str, force_axis_order:Optional[bool]=True, run_in_docker:Optional[bool]=False):
         """
-        Initializes a new SQLProvider instance.
+        Initialize a new SQLProvider instance.
+
         Args:
             service_id (str): Unique identifier for the ldproxy service.
-            force_axis_order (str): Axis order for CRS (e.g., 'true' to enforce lat/lon order).
             table_config (dict): Configuration with schema, tables, and column metadata.
             engine: SQLAlchemy engine for connecting to the database.
-            db_config (dict): Dictionary with database access details.
-            docker (bool): True if ldproxy runs in Docker and accesses a database outside the container.
+            db_conn_str (str): Database connection string.
+            force_axis_order (bool, optional): Whether to enforce axis order for CRS.
+                Defaults to True.
+            run_in_docker (bool, optional): Whether ldproxy runs in Docker and needs
+                special hostname resolution. Defaults to False.
         """
         self.service_id = service_id
         self.engine = engine
@@ -84,8 +91,6 @@ class SQLProvider:
             "types": {}
         }
 
-
-
         self.create_types()
 
     def map_datatype(self, data_type):
@@ -93,14 +98,17 @@ class SQLProvider:
         Maps SQLAlchemy column types to ldproxy-compatible type strings.
 
         Args:
-            data_type: A SQLAlchemy type object.
+            data_type: A SQLAlchemy type object (e.g., VARCHAR, TIMESTAMP, Integer).
 
         Returns:
-            str: A string representing the mapped type for ldproxy ('STRING', 'INTEGER', etc.).
+            str: A string representing the mapped type for ldproxy:
+                - 'STRING' for VARCHAR, Text, String
+                - 'DATETIME' for TIMESTAMP
+                - 'INTEGER' for BIGINT, Integer
+                - Original type string for other types
         """
         if isinstance(data_type, (VARCHAR, Text, String)):
             return 'STRING'
-
         elif isinstance(data_type, TIMESTAMP):
             return 'DATETIME'
         elif isinstance(data_type, (BIGINT, Integer)):
@@ -113,12 +121,17 @@ class SQLProvider:
         Converts raw geometry type names to ldproxy-compatible geometry types.
 
         Args:
-            geom_type (str): Geometry type as stored in `geometry_columns` (e.g., 'MULTILINESTRING').
+            geom_type (str): Geometry type as stored in `geometry_columns`
+                (e.g., 'MULTILINESTRING', 'LINESTRING', 'MULTIPOLYGON').
 
         Returns:
-            str: ldproxy-compatible geometry type string.
+            str: ldproxy-compatible geometry type string:
+                - 'MULTI_LINE_STRING' for MULTILINESTRING
+                - 'LINE_STRING' for LINESTRING
+                - 'MULTI_POLYGON' for MULTIPOLYGON
+                - 'MULTI_POINT' for MULTIPOINT
+                - Original type for other geometries
         """
-
         if geom_type == "MULTILINESTRING":
             return "MULTI_LINE_STRING"
         if geom_type == "LINESTRING":
@@ -134,8 +147,9 @@ class SQLProvider:
         """
         Builds the 'types' section of the provider configuration.
 
-        This includes reading all defined tables and their columns and setting
-        up ldproxy-compatible property definitions for each.
+        This method processes all defined tables and their columns to create
+        ldproxy-compatible type definitions. Each table becomes a type with
+        its properties mapped from the column definitions.
         """
         for tablename in self.table_config['tables']:
             properties = self.create_table_properties(tablename['columns'], tablename['tablename'])
@@ -149,7 +163,8 @@ class SQLProvider:
             tablename (str): Name of the table for which to retrieve geometry type.
 
         Returns:
-            str: Mapped geometry type string or "ANY" if not found.
+            str: Mapped geometry type string or "ANY" if not found or if the type
+                is 'GEOMETRY' (generic geometry type).
         """
         geometry_type = "ANY"
 
@@ -167,12 +182,20 @@ class SQLProvider:
         """
         Creates a dictionary of property definitions for ldproxy.
 
+        This method processes each column in the table to create appropriate
+        property definitions, handling special cases for geometry, ID, and
+        datetime columns.
+
         Args:
             columns (list): List of dicts, each with a 'name' and 'type' for a column.
             tablename (str): Name of the table to which the columns belong.
 
         Returns:
             dict: Mapping of column names to property definitions for ldproxy.
+                Special roles are assigned to:
+                - 'geom' column: PRIMARY_GEOMETRY
+                - 'id' column: ID (with RECEIVABLE excluded)
+                - First datetime column: PRIMARY_INSTANT
         """
         properties = {}
         has_datetime_role = False
@@ -201,8 +224,21 @@ class SQLProvider:
         """
         Builds the database connection info dictionary for ldproxy.
 
+        This method creates the connection configuration, handling special cases
+        for Docker environments where hostname resolution needs to be adjusted.
+
+        Args:
+            run_in_docker (bool): Whether ldproxy is running in Docker and needs
+                special hostname resolution.
+
         Returns:
-            dict: Connection settings including dialect, credentials, host, and schema.
+            dict: Connection settings including:
+                - dialect: Always 'PGIS' for PostGIS
+                - database: Database name
+                - host: Hostname (adjusted for Docker if needed)
+                - user: Database username
+                - password: Base64 encoded password
+                - schemas: Database schema name
         """
         connection = {}
         connection['dialect'] = 'PGIS'
@@ -218,8 +254,12 @@ class SQLProvider:
         """
         Writes the provider configuration as a YAML file to the specified directory.
 
+        This method creates the necessary directory structure and writes the
+        configuration to a YAML file in the providers subdirectory.
+
         Args:
-            export_dir (str): Base directory where the 'providers' folder and YAML will be saved.
+            export_dir (str): Base directory where the 'providers' folder and YAML
+                will be saved. The final file will be in a 'providers' subdirectory.
         """
         export_path = os.path.join(os.getcwd(), export_dir, 'providers')
 
@@ -227,7 +267,7 @@ class SQLProvider:
           os.makedirs(export_path)
 
         yaml_file = os.path.join(export_path, f"{self.service_id}.yml")
-        print('file locaiton', yaml_file)
+        print('file location:', yaml_file)
 
         with open(yaml_file, 'w') as f:
             yaml.dump(self.config, f, sort_keys=False)

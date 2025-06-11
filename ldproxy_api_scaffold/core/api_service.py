@@ -11,11 +11,19 @@ class ApiService:
     API building blocks, and dataset collections. The configuration can be exported
     as a YAML file for use in LDProxy.
 
+    The service configuration includes:
+    - Basic service metadata (ID, timestamps, description)
+    - API building blocks (TILES, CRS, STYLES, etc.)
+    - Collection definitions for each table
+    - Feature API configurations when filtering is enabled
+
     Attributes:
         service_id (str): Unique identifier for the service.
-        api_buildingsblocks (list): List of API building blocks to include (e.g., 'TILES', 'CRS').
+        api_buildingsblocks (list): List of API building blocks to include
+            (e.g., 'TILES', 'CRS', 'STYLES').
         table_config (dict): Dictionary containing table schema and column information.
         config (dict): The full configuration dictionary that will be exported.
+            Contains service metadata, API blocks, and collection definitions.
 
     Methods:
         create_api_buildingblocks():
@@ -30,12 +38,14 @@ class ApiService:
 
     def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list):
         """
-        Initializes the ApiService with basic settings and triggers configuration setup.
+        Initialize the ApiService with basic settings and trigger configuration setup.
 
         Args:
             service_id (str): Unique name/identifier for the LDProxy service.
             table_config (dict): Dictionary containing table and column metadata.
-            api_buildingblocks (list): List of building blocks to include in the API configuration.
+                Should include a 'tables' key with a list of table definitions.
+            api_buildingblocks (list): List of building blocks to include in the API
+                configuration (e.g., ['TILES', 'CRS', 'STYLES']).
         """
         self.service_id = service_id
         self.api_buildingsblocks = api_buildingblocks
@@ -60,12 +70,18 @@ class ApiService:
         """
         Appends the configured API building blocks to the service.
 
-        Based on the input list `api_buildingblocks`, this method appends instances
-        of building blocks like Queryables, Tiles, CRS, etc., to the `config['api']` list.
+        This method processes the input list of building blocks and creates
+        appropriate configuration objects for each. The following blocks are supported:
+        - QUERYABLES: Enables property-based querying
+        - PROJECTIONS: Enables map projection capabilities
+        - TILES: Enables tile-based data access (includes TileMatrixSet)
+        - CRS: Defines coordinate reference systems
+        - STYLES: Enables styling capabilities
+        - FILTER: Enables filtering operations
+
+        Each block is added to the service's 'api' configuration list.
         """
-
         for api in self.api_buildingsblocks:
-
             if (api == 'QUERYABLES'):
                 self.config["api"].append(Queryables().export_as_dict())
 
@@ -85,14 +101,19 @@ class ApiService:
             if (api == 'FILTER'):
                 self.config["api"].append(Filter().export_as_dict())
 
-
     def create_collections(self):
         """
-        Populates the `collections` section of the configuration.
+        Populates the 'collections' section of the configuration.
 
-        Each table in `table_config['tables']` becomes a collection. If 'FILTER' is enabled
-        in the building blocks, then a `FEATURES_CORE` block with queryable columns is added
-        to the collection definition.
+        This method processes each table in the configuration to create collection
+        definitions. Each table becomes a collection with basic metadata. If the
+        'FILTER' building block is enabled, each collection also gets a FEATURES_CORE
+        configuration that enables spatial and property-based querying.
+
+        The collection configuration includes:
+        - Basic metadata (ID, label)
+        - Feature API configuration (when filtering is enabled)
+        - Queryable properties (derived from table columns)
         """
         for table in self.table_config['tables']:
             table_name = table['tablename']
@@ -101,15 +122,17 @@ class ApiService:
             if 'FILTER' in self.api_buildingsblocks:
                 self.config["collections"][table_name]['api'] = [FEATURES_CORE(table['columns']).export_as_dict()]
 
-
     def create_yaml(self, export_dir:str):
         """
         Exports the current service configuration to a YAML file.
 
-        The file is saved in a subdirectory `services/` under the provided export directory.
+        This method creates the necessary directory structure and writes the
+        complete service configuration to a YAML file. The file is saved in a
+        'services' subdirectory under the provided export directory.
 
         Args:
             export_dir (str): Relative or absolute path to the export directory.
+                The final YAML file will be saved in a 'services' subdirectory.
         """
         export_path = os.path.join(os.getcwd(), export_dir, 'services')
 
