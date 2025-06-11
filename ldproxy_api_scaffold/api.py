@@ -29,7 +29,7 @@ class APIConfig():
         service_id (str): Identifier used for the LDProxy service.
         schema_name (str): Name of the schema in the database.
         db_conn_str (str): SQLAlchemy-compatible connection string to the database.
-        db_template_str (str, optional): Template connection string for provider configuration.
+        db_host_template_str (str, optional): Template connection string for provider configuration.
             If not provided, uses db_conn_str.
         target_tables (List[str], optional): Specific tables to include in the configuration.
             If None, all tables in the schema are used.
@@ -42,6 +42,11 @@ class APIConfig():
             - PROJECTIONS: Map projection support
         run_in_docker (bool): Flag indicating whether Docker-compatible paths should be used.
             Affects hostname resolution in provider configurations.
+        db_client (DatabaseClient): Client for database operations.
+        table_config (dict): Configuration for tables and their columns.
+        service_obj (ApiService): Service configuration generator.
+        sql_provider_obj (SQLProvider): SQL provider configuration generator.
+        tile_provider_obj (TileProvider): Tile provider configuration generator.
 
     Methods:
         _init_resources():
@@ -53,7 +58,7 @@ class APIConfig():
         dispose_engine():
             Cleans up database engine resources.
     """
-    def __init__(self, service_id:str, schema_name:str, db_conn_str:str, db_template_str: Optional[str] = None, target_tables:Optional[List[str]] = None,
+    def __init__(self, service_id:str, schema_name:str, db_conn_str:str, db_host_template_str: Optional[str] = None, target_tables:Optional[List[str]] = None,
                         api_blocks:Optional[List[str]] = None,
                         run_in_docker:bool = False):
         """
@@ -76,7 +81,7 @@ class APIConfig():
         self.service_id = service_id
         self.schema_name = schema_name
         self.db_conn_str = db_conn_str
-        self.db_template_str = db_template_str or db_conn_str
+        self.db_host_template_str = db_host_template_str
         self.target_tables = target_tables
         self.api_blocks = api_blocks or ["QUERYABLES", "CRS", "FILTER", "TILES", "STYLES", "PROJECTIONS"]
         self.run_in_docker = run_in_docker
@@ -108,7 +113,7 @@ class APIConfig():
         self.sql_provider_obj = SQLProvider(self.service_id,
                                             table_config=self.table_config,
                                             engine=self.db_client.engine,
-                                            db_conn_str=self.db_template_str,
+                                            db_host_template_str=self.db_host_template_str,
                                             run_in_docker=self.run_in_docker)
         self.tile_provider_obj = TileProvider(self.service_id, self.table_config)
 
@@ -129,18 +134,14 @@ class APIConfig():
             export_dir (str): Base directory where the configuration files will be saved.
                 The files will be organized in 'services' and 'providers' subdirectories.
         """
-        self.service_obj.create_yaml(export_dir)
-        self.sql_provider_obj.create_yaml(export_dir)
-        self.tile_provider_obj.create_yaml(export_dir)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        full_export_dir =  os.path.join(current_dir, export_dir.lstrip(os.sep))
+
+        self.service_obj.create_yaml(full_export_dir)
+        self.sql_provider_obj.create_yaml(full_export_dir)
+        self.tile_provider_obj.create_yaml(full_export_dir)
 
         self.dispose_engine()
 
     def dispose_engine(self):
-        """
-        Cleans up database engine resources.
-
-        This method should be called after generating configurations to properly
-        close database connections and free resources. It's automatically called
-        by the generate() method.
-        """
         self.db_client.dispose_engine()
