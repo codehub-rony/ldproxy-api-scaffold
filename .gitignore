@@ -1,6 +1,12 @@
-/venv
-config.py
-export/
-output/
+# Python build artifacts
 *.egg-info/
-__pycache__
+dist/
+build/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
