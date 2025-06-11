@@ -1,3 +1,3 @@
-from .api import LDProxyConfigGenerator
+from .api import APIConfig
 
-__all__ = ["LDProxyConfigGenerator"]
+__all__ = ["APIConfig"]
