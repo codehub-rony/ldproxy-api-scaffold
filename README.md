@@ -11,6 +11,17 @@ Currently the following API building blocks are supported
 
 See [ldproxy docs](https://docs.ldproxy.net/services/building-blocks/) for more information
 
-#### Command line interface
+### Example code
 
-A small command line interface is available for going through the steps. Start gui by running `python generator-ui.py` after installing the `requirements.txt`.
+```
+from ldproxy_api_scaffold import APIConfig
+
+gen = APIConfig(service_id=<service_id>, schema_name=<schema_name>,
+                             db_conn_str='postgresql://<db_user>:<db_pass>@localhost:5432.<db_name>',
+                             db_host_template_str='<host_template>', run_in_docker=True)
+
+
+export_dir = 'store/entities'
+
+gen.generate(export_dir=export_dir)
+```
