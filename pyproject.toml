@@ -21,7 +21,7 @@ dev = [
 ]
 
 [project.scripts]
-ldproxy-scaffold = "ldproxy_api_scaffold.scaffold:main"
+ldproxy-scaffold = "ldproxy_api_scaffold.cli:main"
 
 [build-system]
 requires = ["setuptools", "wheel"]
