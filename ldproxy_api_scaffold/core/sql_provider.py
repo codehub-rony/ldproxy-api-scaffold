@@ -289,7 +289,7 @@ class SQLProvider:
             export_dir (str): Base directory where the configuration file will be saved.
                 The file will be saved in a 'providers' subdirectory.
         """
-        export_path = os.path.join(os.getcwd(), export_dir, 'providers')
+        export_path = os.path.join(export_dir, 'providers')
 
         if not os.path.exists(export_path):
           os.makedirs(export_path)

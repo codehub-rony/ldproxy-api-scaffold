@@ -134,7 +134,7 @@ class ApiService:
             export_dir (str): Relative or absolute path to the export directory.
                 The final YAML file will be saved in a 'services' subdirectory.
         """
-        export_path = os.path.join(os.getcwd(), export_dir, 'services')
+        export_path = os.path.join(export_dir, 'services')
 
         if not os.path.exists(export_path):
           os.makedirs(export_path)
