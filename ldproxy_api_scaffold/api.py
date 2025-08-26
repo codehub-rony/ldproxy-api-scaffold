@@ -134,14 +134,10 @@ class APIConfig():
             export_dir (str): Base directory where the configuration files will be saved.
                 The files will be organized in 'services' and 'providers' subdirectories.
         """
-        # current_dir = os.path.dirname(os.path.abspath(__file__))
-        # full_export_dir =  os.path.join(current_dir, export_dir.lstrip(os.sep))
-        
-        full_export_dir =  export_dir
 
-        self.service_obj.create_yaml(full_export_dir)
-        self.sql_provider_obj.create_yaml(full_export_dir)
-        self.tile_provider_obj.create_yaml(full_export_dir)
+        self.service_obj.create_yaml(export_dir)
+        self.sql_provider_obj.create_yaml(export_dir)
+        self.tile_provider_obj.create_yaml(export_dir)
 
         self.dispose_engine()
 
