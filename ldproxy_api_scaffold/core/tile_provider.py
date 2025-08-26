@@ -99,7 +99,7 @@ class TileProvider:
             export_dir (str): The directory where the 'providers' folder will be created.
                 The final YAML file will be saved in a 'providers' subdirectory.
         """
-        export_path = os.path.join(os.getcwd(), export_dir, 'providers')
+        export_path = os.path.join(export_dir, 'providers')
 
         if not os.path.exists(export_path):
           os.makedirs(export_path)
