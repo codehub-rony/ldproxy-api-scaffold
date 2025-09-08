@@ -1,5 +1,3 @@
-import yaml
-import os
 from typing import List, Optional
 from ldproxy_api_scaffold.core.api_service import ApiService
 from ldproxy_api_scaffold.core.sql_provider import SQLProvider
