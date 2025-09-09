@@ -9,7 +9,7 @@ class BaseBuildingBlock():
         config (dict): Configuration dictionary representing the building block.
             Contains at minimum 'buildingBlock' and 'enabled' keys.
     """
-    def __init__(self, building_block_name):
+    def __init__(self, building_block_name, params=None):
         """
         Initialize a new building block configuration.
 
@@ -20,6 +20,8 @@ class BaseBuildingBlock():
             "buildingBlock": building_block_name,
             "enabled": True
         }
+        if params:
+            self.config.update(params[building_block_name])
 
     def export_as_dict(self):
         """
@@ -40,6 +42,18 @@ class Queryables(BaseBuildingBlock):
     def __init__(self):
         super().__init__("QUERYABLES")
         self.config["included"] = ['*']
+
+    def export_as_dict(self):
+        return self.config
+
+class HTML(BaseBuildingBlock):
+    """
+     Configuration for HTML output settings in the API.
+
+     This building block defines how the API should handle or generate HTML content.
+    """
+    def __init__(self, params=None):
+        super().__init__("HTML", params)
 
     def export_as_dict(self):
         return self.config

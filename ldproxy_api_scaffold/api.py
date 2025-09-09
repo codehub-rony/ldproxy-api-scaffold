@@ -57,6 +57,7 @@ class APIConfig():
             Cleans up database engine resources.
     """
     def __init__(self, service_id:str, schema_name:str, db_conn_str:str, db_host_template_str: Optional[str] = None, target_tables:Optional[List[str]] = None,
+                        api_block_params:Optional[List[dict]] = None,
                         api_blocks:Optional[List[str]] = None,
                         run_in_docker:bool = False):
         """
@@ -83,6 +84,7 @@ class APIConfig():
         self.target_tables = target_tables
         self.api_blocks = api_blocks or ["QUERYABLES", "CRS", "FILTER", "TILES", "STYLES", "PROJECTIONS"]
         self.run_in_docker = run_in_docker
+        self.api_block_params = api_block_params
 
         self.db_client = DatabaseClient(self.db_conn_str, self.schema_name)
 
@@ -107,7 +109,7 @@ class APIConfig():
 
         self.table_config = self.db_client.create_table_config(self.target_tables)
 
-        self.service_obj = ApiService(self.service_id, self.table_config, self.api_blocks)
+        self.service_obj = ApiService(self.service_id, self.table_config, self.api_blocks, self.api_block_params)
         self.sql_provider_obj = SQLProvider(self.service_id,
                                             table_config=self.table_config,
                                             engine=self.db_client.engine,

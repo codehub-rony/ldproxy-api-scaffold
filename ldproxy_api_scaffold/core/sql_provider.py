@@ -259,8 +259,6 @@ class SQLProvider:
                 - password: Base64 encoded password
                 - schemas: Database schema name
         """
-
-
         connection = {}
         connection['dialect'] = 'PGIS'
         connection['database'] = self.engine.url.database
@@ -270,7 +268,7 @@ class SQLProvider:
         elif self.db_host_template_str:
             connection['host'] = self.db_host_template_str
         else:
-            connection['host'] =self.engine.url.host
+            connection['host'] =f"{self.engine.url.host}:{self.engine.url.port}"
         connection['user'] = self.engine.url.username
         connection['password'] = base64.b64encode(self.engine.url.password.encode()).decode()
         connection['schemas'] = self.table_config['db_schema']
