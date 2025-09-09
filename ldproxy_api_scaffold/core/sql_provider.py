@@ -1,5 +1,5 @@
 import time
-from sqlalchemy import VARCHAR, Text, String, TIMESTAMP, text, Integer, BIGINT
+from sqlalchemy import VARCHAR, Text, String, TIMESTAMP, text, Integer, BIGINT, DOUBLE_PRECISION
 import os
 import base64
 import yaml
@@ -111,6 +111,7 @@ class SQLProvider:
                 - 'STRING' for VARCHAR, Text, String
                 - 'DATETIME' for TIMESTAMP
                 - 'INTEGER' for BIGINT, Integer
+                - 'FLOAT' for DOUBLE_PRECISION
                 - Original type string for other types
         """
         if isinstance(data_type, (VARCHAR, Text, String)):
@@ -119,6 +120,8 @@ class SQLProvider:
             return 'DATETIME'
         elif isinstance(data_type, (BIGINT, Integer)):
             return 'INTEGER'
+        elif isinstance(data_type, DOUBLE_PRECISION):
+            return 'FLOAT'
         else:
             return f"{data_type}"
 
