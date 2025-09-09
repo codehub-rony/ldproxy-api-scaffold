@@ -1,5 +1,5 @@
 import time
-from .api_blocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections
+from .api_blocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections, HTML
 import os
 import yaml
 
@@ -36,7 +36,7 @@ class ApiService:
             Exports the final configuration as a YAML file to the given directory.
     """
 
-    def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list):
+    def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list, api_building_block_params:list):
         """
         Initialize the ApiService with basic settings and trigger configuration setup.
 
@@ -50,6 +50,7 @@ class ApiService:
         self.service_id = service_id
         self.api_buildingsblocks = api_buildingblocks
         self.table_config = table_config
+        self.api_building_block_params = api_building_block_params
         self.config = {
             "id": service_id,
             "createdAt": round(time.time()),
@@ -100,6 +101,9 @@ class ApiService:
 
             if (api == 'FILTER'):
                 self.config["api"].append(Filter().export_as_dict())
+
+            if (api == 'HTML'):
+                self.config["api"].append(HTML(self.api_building_block_params).export_as_dict())
 
     def create_collections(self):
         """
