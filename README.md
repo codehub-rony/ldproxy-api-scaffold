@@ -8,6 +8,7 @@ Currently the following API building blocks are supported
 - `TILES`
 - `CRS`
 - `STYLES`
+- `HTML`
 
 See [ldproxy docs](https://docs.ldproxy.net/services/building-blocks/) for more information
 
@@ -24,4 +25,35 @@ gen = APIConfig(service_id=<service_id>, schema_name=<schema_name>,
 export_dir = 'store/entities'
 
 gen.generate(export_dir=export_dir)
+```
+
+#### Generating config files with custom params
+
+You can customize the generated configuration files by providing additional parameters that override or extend the default settings of specific API block
+
+```
+params = {
+    "HTML": {"homeUrl": "https://dummy.com"},
+
+}
+
+
+config_generator = APIConfig(
+    service_id=service_id,
+    schema_name="public",
+    db_conn_str=db_con_str,
+    api_blocks=["QUERYABLES", "CRS", "FILTER", "TILES", "STYLES", "PROJECTIONS", "HTML"],
+    api_block_params=params
+
+)
+```
+
+The above code will generate the following config:
+
+```
+//services/<service_id>.yml
+
+- buildingBlock: HTML
+  enabled: true
+  homeUrl: https://dummy.com
 ```
