@@ -57,7 +57,7 @@ class APIConfig():
             Cleans up database engine resources.
     """
     def __init__(self, service_id:str, schema_name:str, db_conn_str:str, db_host_template_str: Optional[str] = None, target_tables:Optional[List[str]] = None,
-                        api_block_params:Optional[List[dict]] = None,
+                        custom_config:Optional[dict] = None,
                         api_blocks:Optional[List[str]] = None,
                         run_in_docker:bool = False):
         """
@@ -84,7 +84,7 @@ class APIConfig():
         self.target_tables = target_tables
         self.api_blocks = api_blocks or ["QUERYABLES", "CRS", "FILTER", "TILES", "STYLES", "PROJECTIONS"]
         self.run_in_docker = run_in_docker
-        self.api_block_params = api_block_params
+        self.custom_config = custom_config
 
         self.db_client = DatabaseClient(self.db_conn_str, self.schema_name)
 
@@ -109,12 +109,13 @@ class APIConfig():
 
         self.table_config = self.db_client.create_table_config(self.target_tables)
 
-        self.service_obj = ApiService(self.service_id, self.table_config, self.api_blocks, self.api_block_params)
+        self.service_obj = ApiService(self.service_id, self.table_config, self.api_blocks, self.custom_config)
         self.sql_provider_obj = SQLProvider(self.service_id,
                                             table_config=self.table_config,
                                             engine=self.db_client.engine,
                                             db_host_template_str=self.db_host_template_str,
-                                            run_in_docker=self.run_in_docker)
+                                            run_in_docker=self.run_in_docker,
+                                            custom_config=self.custom_config)
         self.tile_provider_obj = TileProvider(self.service_id, self.table_config)
 
     def generate(self, export_dir:str):
