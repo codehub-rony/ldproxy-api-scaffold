@@ -7,50 +7,50 @@ class ApiService:
     """
     Represents an LDProxy service configuration generator.
 
-    This class constructs a full service configuration including general settings,
-    API building blocks, and dataset collections. The configuration can be exported
-    as a YAML file for use in LDProxy.
+    This class builds a complete LDProxy service configuration including:
+    - General service metadata
+    - API building blocks (e.g. TILES, CRS, STYLES, FILTER, HTML)
+    - Dataset collections derived from table configuration
+    - Optional custom configuration overrides
 
-    The service configuration includes:
-    - Basic service metadata (ID, timestamps, description)
-    - API building blocks (TILES, CRS, STYLES, etc.)
-    - Collection definitions for each table
-    - Feature API configurations when filtering is enabled
+    The resulting configuration can be exported as YAML for use in LDProxy.
 
     Attributes:
         service_id (str): Unique identifier for the service.
-        api_buildingsblocks (list): List of API building blocks to include
-            (e.g., 'TILES', 'CRS', 'STYLES').
-        table_config (dict): Dictionary containing table schema and column information.
-        config (dict): The full configuration dictionary that will be exported.
-            Contains service metadata, API blocks, and collection definitions.
+        api_buildingblocks (list): List of API building blocks to include
+            (e.g. 'TILES', 'CRS', 'STYLES', 'FILTER').
+        table_config (dict): Dictionary containing schema, tables, and column metadata.
+        custom_config (dict): Optional dictionary containing overrides for default configuration.
+        config (dict): The final service configuration dictionary that will be exported.
 
     Methods:
         create_api_buildingblocks():
             Appends the selected API building blocks to the service configuration.
 
         create_collections():
-            Adds collection configurations based on the provided table schema.
+            Creates collection configurations based on the provided table schema.
 
         create_yaml(export_dir: str):
             Exports the final configuration as a YAML file to the given directory.
     """
 
-    def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list, api_building_block_params:list):
+    def __init__(self, service_id:str, table_config:dict, api_buildingblocks:list, custom_config:dict):
         """
-        Initialize the ApiService with basic settings and trigger configuration setup.
+        Initialize the ApiService with configuration settings and trigger setup.
 
         Args:
-            service_id (str): Unique name/identifier for the LDProxy service.
+            service_id (str): Unique identifier for the LDProxy service.
             table_config (dict): Dictionary containing table and column metadata.
                 Should include a 'tables' key with a list of table definitions.
-            api_buildingblocks (list): List of building blocks to include in the API
-                configuration (e.g., ['TILES', 'CRS', 'STYLES']).
+            api_buildingblocks (list): List of API building blocks to include in the API
+                configuration (e.g. ['TILES', 'CRS', 'STYLES', 'FILTER']).
+            custom_config (dict): Optional configuration dictionary used to override
+                default service settings (e.g. HTML settings, provider options).
         """
         self.service_id = service_id
         self.api_buildingsblocks = api_buildingblocks
         self.table_config = table_config
-        self.api_building_block_params = api_building_block_params
+        self.custom_config = custom_config
         self.config = {
             "id": service_id,
             "createdAt": round(time.time()),
@@ -82,28 +82,30 @@ class ApiService:
 
         Each block is added to the service's 'api' configuration list.
         """
+
+        params = self.custom_config['service']['api']
         for api in self.api_buildingsblocks:
             if (api == 'QUERYABLES'):
-                self.config["api"].append(Queryables().export_as_dict())
+                self.config["api"].append(Queryables(params).export_as_dict())
 
             if (api == 'PROJECTIONS'):
-                self.config['api'].append(Projections().export_as_dict())
+                self.config['api'].append(Projections(params).export_as_dict())
 
             if (api == 'TILES'):
-                self.config["api"].append(TileMatrixSet().export_as_dict())
-                self.config["api"].append(Tiles(self.service_id).export_as_dict())
+                self.config["api"].append(TileMatrixSet(params).export_as_dict())
+                self.config["api"].append(Tiles(self.service_id, params).export_as_dict())
 
             if (api == 'CRS'):
                 self.config["api"].append(CRS().export_as_dict())
 
             if (api == 'STYLES'):
-                self.config["api"].append(Styles().export_as_dict())
+                self.config["api"].append(Styles(params).export_as_dict())
 
             if (api == 'FILTER'):
-                self.config["api"].append(Filter().export_as_dict())
+                self.config["api"].append(Filter(params).export_as_dict())
 
             if (api == 'HTML'):
-                self.config["api"].append(HTML(self.api_building_block_params).export_as_dict())
+                self.config["api"].append(HTML(params).export_as_dict())
 
     def create_collections(self):
         """

@@ -27,14 +27,29 @@ export_dir = 'store/entities'
 gen.generate(export_dir=export_dir)
 ```
 
-#### Generating config files with custom params
+#### Overriding or adding custom configurations
 
-You can customize the generated configuration files by providing additional parameters that override or extend the default settings of specific API block
+The configuration generator supports custom overrides via the custom_config parameter.
+
+This allows you to modify both:
+
+Service level settings (provider configuration)
+API building blocks (e.g. HTML, QUERYABLES, TILES)
+
+All overrides are deep-merged, meaning nested values are safely updated without replacing entire objects.
 
 ```
-params = {
-    "HTML": {"homeUrl": "https://dummy.com"},
-
+custom_config = {
+    'service': {
+        'api': {
+            'HTML':  {"homeUrl": "https://dummy.test/cool"},
+            'QUERYABLES':  {"enabled": False},
+        }
+    },
+    'provider': {
+        'entityStorageVersion': 3,
+        'queryGeneration': {'computeNumberMatched': False}
+    }
 }
 
 
@@ -43,7 +58,7 @@ config_generator = APIConfig(
     schema_name="public",
     db_conn_str=db_con_str,
     api_blocks=["QUERYABLES", "CRS", "FILTER", "TILES", "STYLES", "PROJECTIONS", "HTML"],
-    api_block_params=params
+    custom_config=custom_config
 
 )
 ```
@@ -56,4 +71,19 @@ The above code will generate the following config:
 - buildingBlock: HTML
   enabled: true
   homeUrl: https://dummy.com
+```
+
+```
+//providers/<service_id>.yml
+
+id: <service_id>
+entityStorageVersion: 3
+createdAt: 1775732757
+lastModified: 1775732757
+providerType: FEATURE
+providerSubType: SQL
+...
+typeValidation: NONE
+queryGeneration:
+  computeNumberMatched: false
 ```

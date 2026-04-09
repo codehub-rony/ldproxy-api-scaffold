@@ -7,56 +7,61 @@ from typing import Optional
 
 class SQLProvider:
     """
-    A class to generate ldproxy provider configuration for SQL-based feature services.
+    Generates an LDProxy provider configuration for SQL-based feature services.
 
-    This class handles the creation of provider configurations for SQL databases,
-    particularly focusing on PostGIS-enabled databases. It manages type mappings,
-    geometry handling, and database connection settings.
+    This class builds provider configurations for SQL databases (typically PostGIS),
+    including type mapping, geometry handling, connection setup, and optional custom overrides.
+
+    It transforms database metadata into an LDProxy-compatible provider configuration
+    that can be exported as YAML.
 
     Attributes:
-        service_id (str): Identifier of the ldproxy service.
+        service_id (str): Identifier of the LDProxy service.
         engine: SQLAlchemy engine used to connect to the database.
-        db_host_template_str (str): Template string for database host configuration.
-        run_in_docker (bool): Whether the service runs in Docker environment.
-        db_config (dict): Dictionary with database connection information.
-        table_config (dict): Table and column configuration for the provider.
-        config (dict): Internal configuration object representing the provider YAML structure.
+        db_host_template_str (str): Template string used for database host resolution.
+        run_in_docker (bool): Whether the service runs in a Docker environment.
+        db_config (dict): Dictionary containing resolved database connection information.
+        table_config (dict): Table and column configuration used to generate provider types.
+        custom_config (dict): Optional dictionary for overriding default provider configuration.
+        config (dict): Internal configuration dictionary representing the LDProxy provider.
 
     Methods:
         map_datatype(data_type):
-            Converts SQLAlchemy data types to ldproxy-compatible type strings.
+            Maps SQLAlchemy data types to LDProxy-compatible type strings.
 
         map_geom_type(geom_type):
-            Maps raw geometry types to ldproxy-compatible strings.
+            Converts raw PostGIS geometry types to LDProxy-compatible geometry types.
 
         create_types():
-            Populates the configuration with type definitions for each table.
+            Builds LDProxy type definitions for all configured tables.
 
         get_geometry_type(tablename):
-            Retrieves and maps the geometry type of a table from the PostGIS metadata.
+            Retrieves geometry metadata for a table from PostGIS and maps it.
 
         create_table_properties(columns, tablename):
-            Creates a dictionary of ldproxy property definitions for table columns.
+            Creates LDProxy property definitions for table columns.
 
         create_connection_info_dict():
-            Constructs the dictionary with database connection info.
+            Builds the database connection configuration dictionary.
 
         create_yaml(export_dir):
-            Exports the full configuration as a YAML file.
+            Exports the final provider configuration as a YAML file.
     """
-    def __init__(self, service_id:str, table_config:dict, engine, db_host_template_str:Optional[str], force_axis_order:Optional[bool]=True, run_in_docker:Optional[bool]=False):
+    def __init__(self, service_id:str, table_config:dict, engine, db_host_template_str:Optional[str], force_axis_order:Optional[bool]=True, run_in_docker:Optional[bool]=False, custom_config:Optional[dict]=None):
         """
         Initialize a new SQLProvider instance.
 
         Args:
-            service_id (str): Unique identifier for the ldproxy service.
-            table_config (dict): Configuration with schema, tables, and column metadata.
-            engine: SQLAlchemy engine for connecting to the database.
-            db_conn_str (str): Database connection string.
-            force_axis_order (bool, optional): Whether to enforce axis order for CRS.
+            service_id (str): Unique identifier for the LDProxy service.
+            table_config (dict): Configuration containing schema, tables, and column metadata.
+            engine: SQLAlchemy engine used for database connections.
+            db_host_template_str (Optional[str]): Template string for database host configuration.
+            force_axis_order (Optional[bool]): Whether to enforce axis order for CRS.
                 Defaults to True.
-            run_in_docker (bool, optional): Whether ldproxy runs in Docker and needs
+            run_in_docker (Optional[bool]): Whether LDProxy runs inside Docker and requires
                 special hostname resolution. Defaults to False.
+            custom_config (Optional[dict]): Optional dictionary containing custom configuration
+                overrides for the provider.
         """
         self.service_id = service_id
         self.engine = engine
@@ -64,6 +69,7 @@ class SQLProvider:
         self.run_in_docker = run_in_docker
         self.db_config = None
         self.table_config = table_config
+        self.custom_config = custom_config
 
         native_crs = {
            "code": 4326,
@@ -87,13 +93,41 @@ class SQLProvider:
                 "sortKey": "id"
             },
             "queryGeneration": {
-                "chunkSize": 10000,
                 "computeNumberMatched": True
             },
             "types": {}
         }
 
         self.create_types()
+        self.apply_custom_config()
+
+    def apply_custom_config(self):
+        """
+        Applies custom provider configuration (if provided) to self.config.
+
+        Only merges the 'provider' section of custom_config into the base config.
+        Supports nested dictionary updates.
+        """
+
+        if not self.custom_config:
+            return
+
+        provider_config = self.custom_config.get('provider')
+        if not provider_config:
+            return
+
+        def deep_update(base: dict, updates: dict):
+            for key, value in updates.items():
+                if (
+                    key in base
+                    and isinstance(base[key], dict)
+                    and isinstance(value, dict)
+                ):
+                    deep_update(base[key], value)
+                else:
+                    base[key] = value
+
+        deep_update(self.config, provider_config)
 
     def map_datatype(self, data_type):
         """
@@ -296,7 +330,6 @@ class SQLProvider:
           os.makedirs(export_path)
 
         yaml_file = os.path.join(export_path, f"{self.service_id}.yml")
-        print('file location:', yaml_file)
 
         with open(yaml_file, 'w') as f:
             yaml.dump(self.config, f, sort_keys=False)

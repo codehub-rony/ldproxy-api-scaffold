@@ -13,14 +13,22 @@ class BaseBuildingBlock():
         """
         Initialize a new building block configuration.
 
+        This class represents a single LDProxy API building block configuration.
+        It can optionally apply additional parameters for the given building block.
+
         Args:
-            building_block_name (str): The name of the building block (e.g., 'TILES', 'CRS').
+            building_block_name (str): Name of the building block
+                (e.g. 'TILES', 'CRS', 'STYLES', 'FILTER').
+            params (dict, optional): Optional dictionary of custom parameters.
+                If provided and contains a key matching `building_block_name`,
+                those values will be merged into the configuration.
         """
         self.config = {
             "buildingBlock": building_block_name,
             "enabled": True
         }
-        if params:
+
+        if params and building_block_name in params:
             self.config.update(params[building_block_name])
 
     def export_as_dict(self):
@@ -39,8 +47,8 @@ class Queryables(BaseBuildingBlock):
     This building block defines which properties can be queried in the API.
     By default, it includes all properties ('*').
     """
-    def __init__(self):
-        super().__init__("QUERYABLES")
+    def __init__(self, params=None):
+        super().__init__("QUERYABLES", params)
         self.config["included"] = ['*']
 
     def export_as_dict(self):
@@ -64,8 +72,8 @@ class TileMatrixSet(BaseBuildingBlock):
 
     This building block defines the available tile matrix sets for tiled data.
     """
-    def __init__(self):
-        super().__init__("TILE_MATRIX_SETS")
+    def __init__(self, params=None):
+        super().__init__("TILE_MATRIX_SETS", params)
 
     def export_as_dict(self):
         return self.config
@@ -80,8 +88,8 @@ class Tiles(BaseBuildingBlock):
     Args:
         service_id (str): The identifier of the service to link tiles to.
     """
-    def __init__(self, service_id):
-        super().__init__("TILES")
+    def __init__(self, service_id, params=None):
+        super().__init__("TILES", params)
         self.config.update({
             "TileProvider": f"{service_id}-tiles",
             "tileProviderTileset": "__all__"
@@ -109,8 +117,8 @@ class Projections(BaseBuildingBlock):
 
     This building block enables projection capabilities for the API.
     """
-    def __init__(self):
-        super().__init__("PROJECTIONS")
+    def __init__(self, params=None):
+        super().__init__("PROJECTIONS", params)
 
 class Styles(BaseBuildingBlock):
     """
@@ -119,8 +127,8 @@ class Styles(BaseBuildingBlock):
     This building block enables style derivation for collections.
     By default, it enables automatic style derivation.
     """
-    def __init__(self):
-        super().__init__("STYLES")
+    def __init__(self, params=None):
+        super().__init__("STYLES", params)
         self.config.update({
              "deriveCollectionStyles": True
         })
@@ -131,8 +139,8 @@ class Filter(BaseBuildingBlock):
 
     This building block enables filtering operations on API resources.
     """
-    def __init__(self):
-        super().__init__("FILTER")
+    def __init__(self, params=None):
+        super().__init__("FILTER", params)
 
 # Collections API's
 class FEATURES_CORE(BaseBuildingBlock):
@@ -145,8 +153,8 @@ class FEATURES_CORE(BaseBuildingBlock):
     Args:
         columns (list): List of column definitions for the feature collection.
     """
-    def __init__(self, columns):
-        super().__init__("FEATURES_CORE")
+    def __init__(self, columns, params=None):
+        super().__init__("FEATURES_CORE", params)
         self.columns = columns
         self.config.update({
             "buildingBlock": "FEATURES_CORE",
