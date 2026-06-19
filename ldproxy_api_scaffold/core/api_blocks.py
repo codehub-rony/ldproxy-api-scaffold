@@ -143,7 +143,7 @@ class Sorting(BaseBuildingBlock):
     def __init__(self):
         super().__init__("SORTING")
         self.config.update({
-            "inclued": [
+            "included": [
                 '*'
             ]
         })
