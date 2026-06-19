@@ -82,8 +82,11 @@ class ApiService:
 
         Each block is added to the service's 'api' configuration list.
         """
+        params = None
 
-        params = self.custom_config['service']['api']
+        if 'api' in self.custom_config['service']:
+            params = self.custom_config['service']['api']
+
         for api in self.api_buildingsblocks:
             if (api == 'QUERYABLES'):
                 self.config["api"].append(Queryables(params).export_as_dict())
@@ -121,12 +124,25 @@ class ApiService:
         - Feature API configuration (when filtering is enabled)
         - Queryable properties (derived from table columns)
         """
+
+        custom_settings = self.custom_config.get('service', {}).get('collections', {})
+
         for table in self.table_config['tables']:
             table_name = table['tablename']
-            self.config["collections"][table_name] = {"id": table_name, "label": table_name, "enabled": True}
+
+            collection = {
+                "id": table_name,
+                "label": table_name,
+                "enabled": True
+            }
+
+            collection.update(custom_settings.get(table_name, {}))
 
             if 'FILTER' in self.api_buildingsblocks:
-                self.config["collections"][table_name]['api'] = [FEATURES_CORE(table['columns']).export_as_dict()]
+                collection['api'] = [FEATURES_CORE(table['columns']).export_as_dict()]
+
+
+            self.config["collections"][table_name] = collection
 
     def create_yaml(self, export_dir:str):
         """
@@ -148,5 +164,11 @@ class ApiService:
         yaml_file = os.path.join(export_path, f"{self.service_id}.yml")
         with open(yaml_file, 'w') as f:
             yaml.dump(self.config, f, sort_keys=False)
+
+
+    def merge_custom_config(self, custom_settings):
+
+        for key in custom_settings:
+            print(key)
 
 
