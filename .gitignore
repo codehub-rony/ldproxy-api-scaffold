@@ -11,3 +11,6 @@ __pycache__/
 venv/
 .env/
 store/
+
+
+test_script.py
