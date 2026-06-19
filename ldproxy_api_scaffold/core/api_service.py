@@ -1,5 +1,5 @@
 import time
-from .api_blocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections, HTML
+from .api_blocks import Queryables, TileMatrixSet, Tiles, Styles, CRS, Filter, FEATURES_CORE, Projections, HTML, Sorting
 import os
 import yaml
 
@@ -109,6 +109,9 @@ class ApiService:
 
             if (api == 'HTML'):
                 self.config["api"].append(HTML(params).export_as_dict())
+
+            if (api == 'SORTING'):
+                self.config["api"].append(Sorting().export_as_dict())
 
     def create_collections(self):
         """

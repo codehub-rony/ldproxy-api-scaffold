@@ -133,6 +133,21 @@ class Styles(BaseBuildingBlock):
              "deriveCollectionStyles": True
         })
 
+class Sorting(BaseBuildingBlock):
+    """
+    Configuration for sorting capabilities in the API.
+
+    This building block enables sorting on attributes.
+    By default, all properties are sortable.
+    """
+    def __init__(self):
+        super().__init__("SORTING")
+        self.config.update({
+            "inclued": [
+                '*'
+            ]
+        })
+
 class Filter(BaseBuildingBlock):
     """
     Configuration for filtering capabilities in the API.
